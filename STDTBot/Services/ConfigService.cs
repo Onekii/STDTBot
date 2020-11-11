@@ -14,7 +14,7 @@ namespace STDTBot.Services
             {
                 var builder = new ConfigurationBuilder()
                     .SetBasePath(Utilities.GetBasePath())
-                    .AddJsonFile(Constants.ConfigFileName, false, true);
+                    .AddJsonFile(Globals.ConfigFileName, false, true);
 
                 return builder.Build();
             }
