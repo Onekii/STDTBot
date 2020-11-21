@@ -22,9 +22,9 @@ namespace STDTBot.Database
             return new MySqlConnectionStringBuilder()
             {
                 Server = "localhost",
-                Password = "stdtbot_123",
-                Database = "stdtbot_test",
-                UserID = "STDTUser_RW",
+                Password = "",
+                Database = "",
+                UserID = "",
                 Port = 3306
             }
             .ConnectionString;

@@ -16,6 +16,10 @@ namespace STDTBot.Database
         internal DbSet<Referral> Referrals { get; set; }
         internal DbSet<SpecialChannel> SpecialChannels { get; set; }
         internal DbSet<User> Users { get; set; }
+        internal DbSet<CommandChannelPermission> CommandChannelPermissions { get; set; }
+        internal DbSet<CommandRolePermission> CommandRolePermissions { get; set; }
+        internal DbSet<MIData> MIData { get; set; }
+        internal DbSet<Config> Config { get; set; }
 
         public STDTContext(DbContextOptions<STDTContext> options) : base(options) { }
 
@@ -48,6 +52,20 @@ namespace STDTBot.Database
 
             modelBuilder.Entity<SpecialChannel>().ToTable("STDT_Channels");
             modelBuilder.Entity<SpecialChannel>().HasKey("ChannelID");
+
+            modelBuilder.Entity<CommandChannelPermission>().ToTable("STDT_Command_Channels");
+            modelBuilder.Entity<CommandChannelPermission>().Property("CommandName").HasMaxLength(50);
+            modelBuilder.Entity<CommandChannelPermission>().HasKey("CommandName", "ChannelID");
+
+            modelBuilder.Entity<CommandRolePermission>().ToTable("STDT_Command_Roles");
+            modelBuilder.Entity<CommandRolePermission>().Property("CommandName").HasMaxLength(50);
+            modelBuilder.Entity<CommandRolePermission>().HasKey("CommandName");
+
+            modelBuilder.Entity<MIData>().ToTable("STDT_MIData");
+            modelBuilder.Entity<MIData>().HasKey("ID");
+
+            modelBuilder.Entity<Config>().ToTable("STDT_Config");
+            modelBuilder.Entity<Config>().HasKey("ID");
         }
     }
 }

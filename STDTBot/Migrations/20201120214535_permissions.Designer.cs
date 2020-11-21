@@ -2,15 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using STDTBot.Database;
 
 namespace STDTBot.Migrations
 {
     [DbContext(typeof(STDTContext))]
-    partial class STDTContextModelSnapshot : ModelSnapshot
+    [Migration("20201120214535_permissions")]
+    partial class permissions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -20,8 +22,7 @@ namespace STDTBot.Migrations
             modelBuilder.Entity("STDTBot.Models.CommandChannelPermission", b =>
                 {
                     b.Property<string>("CommandName")
-                        .HasColumnType("varchar(50)")
-                        .HasMaxLength(50);
+                        .HasColumnType("varchar(767)");
 
                     b.Property<long>("ChannelID")
                         .HasColumnType("bigint");
@@ -34,8 +35,7 @@ namespace STDTBot.Migrations
             modelBuilder.Entity("STDTBot.Models.CommandRolePermission", b =>
                 {
                     b.Property<string>("CommandName")
-                        .HasColumnType("varchar(50)")
-                        .HasMaxLength(50);
+                        .HasColumnType("varchar(767)");
 
                     b.Property<long>("MinimumRole")
                         .HasColumnType("bigint");
@@ -43,46 +43,6 @@ namespace STDTBot.Migrations
                     b.HasKey("CommandName");
 
                     b.ToTable("STDT_Command_Roles");
-                });
-
-            modelBuilder.Entity("STDTBot.Models.Config", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Value")
-                        .HasColumnType("text");
-
-                    b.HasKey("ID");
-
-                    b.ToTable("STDT_Config");
-                });
-
-            modelBuilder.Entity("STDTBot.Models.MIData", b =>
-                {
-                    b.Property<long>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("DateLogged")
-                        .HasColumnType("datetime");
-
-                    b.Property<int>("PointsLogged")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ReasonLogged")
-                        .HasColumnType("int");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("ID");
-
-                    b.ToTable("STDT_MIData");
                 });
 
             modelBuilder.Entity("STDTBot.Models.RaidAttendee", b =>

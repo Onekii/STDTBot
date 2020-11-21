@@ -25,11 +25,26 @@ namespace STDTBot.Services
         private readonly CommandService _commands;
         private readonly IConfigurationRoot _config;
         private readonly IServiceProvider _provider;
+        private IGuild guild;
         private readonly STDTContext _db;
         private ulong _referralChannelId;
         uint pointsPerThird = 0;
 
         private Dictionary<IUser, DateTime> _voiceMembersJoinedTimer { get; set; }
+
+        internal enum CooldownType
+        {
+            StreamTips,
+            GeneralMessage
+        }
+
+        internal struct Cooldown
+        {
+            internal CooldownType Type { get; set; }
+            internal ulong UserId { get; set; }
+            internal DateTime Expires { get; set; }
+        }
+
 
         public CommandHandler(DiscordSocketClient discord, CommandService commands, IConfigurationRoot config, IServiceProvider services, STDTContext context)
         {
@@ -43,18 +58,22 @@ namespace STDTBot.Services
             _client.MessageReceived += OnMessageReceieved;
             _client.UserVoiceStateUpdated += OnUserVoiceStateUpdated;
             _client.GuildMemberUpdated += OnUserUpdated;
+            _client.GuildAvailable += OnGuildAvailable;
+
+
 
             _voiceMembersJoinedTimer = new Dictionary<IUser, DateTime>();
         }
 
+        private async Task OnGuildAvailable(SocketGuild arg)
+        {
+            guild = arg;
+            var channel = await GetReferralsChannel().ConfigureAwait(false);
+            _referralChannelId = channel.Id;
+        }
+
         private async Task OnUserUpdated(SocketGuildUser prev, SocketGuildUser now)
         {
-            // hardcoded, change to config somewhere
-            //STDT Test
-            //IGuild guild = _client.GetGuild(761587244699484160);
-            //STDT live
-            //IGuild guild = _client.GetGuild(751253055378423838);
-
             User u = null;
 
             if (prev.Activity is null && now.Activity != null)
@@ -168,7 +187,7 @@ namespace STDTBot.Services
             if (oldState.VoiceChannel != raidVoiceChannel && newState.VoiceChannel == raidVoiceChannel)
             //Joined Raid Channel
             {
-                _voiceMembersJoinedTimer.Add(user, DateTime.Now);
+                _voiceMembersJoinedTimer.Add(user, DateTime.UtcNow);
 
                 RaidAttendee dbUser = _db.RaidAttendees.Find((long)user.Id, Globals._activeRaid.RaidID);
                 if (dbUser is null)
@@ -197,18 +216,20 @@ namespace STDTBot.Services
 
         private async Task UserLeftRaid(IUser user)
         {
-            DateTime leftTime = DateTime.Now;
+            DateTime leftTime = DateTime.UtcNow;
             DateTime joinedTime = _voiceMembersJoinedTimer[user];
             _voiceMembersJoinedTimer.Remove(user);
 
             double minutesInRaid = leftTime.Subtract(joinedTime).TotalMinutes;
             double pointAmount = Math.Round(minutesInRaid / 3) * pointsPerThird;
 
-            RaidAttendee dbUser = _db.RaidAttendees.Find((long)user.Id, Globals._activeRaid.RaidID);
+            RaidAttendee dbUser = await _db.RaidAttendees.FindAsync((long)user.Id, Globals._activeRaid.RaidID);
             dbUser.MinutesInRaid += (int)minutesInRaid;
             dbUser.PointsObtained += (int)pointAmount;
 
             _db.Entry(dbUser).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+
+            await LogPointsForAction(_db.Users.Find(dbUser.UserID), PointReasons.Raid, (int)pointAmount);
         }
 
         private async Task OnMessageReceieved(SocketMessage message)
@@ -222,22 +243,9 @@ namespace STDTBot.Services
             if (msg.Author == _client.CurrentUser)
                 return;
 
-            if (_referralChannelId == 0)
-            {
-                var x = await GetReferralsChannel().ConfigureAwait(false);
-                _referralChannelId = x.Id;
-            }
 
-            if (msg.Channel.Id == _referralChannelId)
-            {
-                if (msg.MentionedUsers.Count != 1)
-                {
-                    await msg.DeleteAsync();
-                    return;
-                }
-
-                await HandleReferral(msg).ConfigureAwait(false);
-            }
+            if (await HandleSpecialChannels(msg, context).ConfigureAwait(false))
+                return;
 
             int argPos = 0;
             if (msg.HasStringPrefix(_config["prefix"], ref argPos) || msg.HasMentionPrefix(_client.CurrentUser, ref argPos))
@@ -251,11 +259,75 @@ namespace STDTBot.Services
                     await msg.DeleteAsync().ConfigureAwait(false);
                 }
             }
+            else
+            {
+                if (Globals.Cooldowns.Any(x => x.Type == CooldownType.GeneralMessage && x.UserId == msg.Author.Id))
+                    return;
+
+                User dbUser = _db.Users.Find((long)msg.Author.Id);
+                int points = int.Parse(_db.Config.First(x => x.Name == "GeneralMessagePoints").Value);
+                await AddPointsToUser(dbUser, (long)points).ConfigureAwait(false);
+                await LogPointsForAction(dbUser, PointReasons.GeneralMessage, points).ConfigureAwait(false);
+
+                int interval = int.Parse(_db.Config.First(x => x.Name == "GeneralMessageInterval").Value);
+
+                Globals.Cooldowns.Add(new Cooldown()
+                {
+                    UserId = dbUser.GetID(),
+                    Type = CooldownType.GeneralMessage,
+                    Expires = DateTime.UtcNow.AddSeconds(interval)
+                });
+
+            }
+        }
+
+        private async Task<bool> HandleSpecialChannels(SocketUserMessage msg, SocketCommandContext context)
+        {
+            var specialChannel = _db.SpecialChannels.Find((long)msg.Channel.Id);
+
+            if (specialChannel is null)
+                return false;
+
+            int argPos = 0;
+            if (msg.HasStringPrefix(_config["prefix"], ref argPos) || msg.HasMentionPrefix(_client.CurrentUser, ref argPos))
+                return false;
+
+            switch (specialChannel.ChannelType.ToLower())
+            {
+                case "referrals":
+                    {
+                        await HandleReferral(msg).ConfigureAwait(false);
+                        return true;
+                    }
+                case "streamtips":
+                    {
+                        if (Globals.Cooldowns.Any(x => x.Type == CooldownType.StreamTips && x.UserId == msg.Author.Id))
+                            return true;
+
+                        User dbUser = _db.Users.Find((long)msg.Author.Id);
+                        int points = int.Parse(_db.Config.First(x => x.Name == "StreamTipsPoints").Value);
+
+                        await AddPointsToUser(dbUser, (long)points).ConfigureAwait(false);
+                        await LogPointsForAction(dbUser, PointReasons.StreamTips, points).ConfigureAwait(false);
+
+                        int interval = int.Parse(_db.Config.First(x => x.Name == "StreamTipsInterval").Value);
+                        Globals.Cooldowns.Add(new Cooldown()
+                        {
+                            UserId = dbUser.GetID(),
+                            Type = CooldownType.GeneralMessage,
+                            Expires = DateTime.UtcNow.AddSeconds(interval)
+                        });
+
+                        return true;
+                    }
+            }
+
+            return false;
         }
 
         private async Task HandleReferral(SocketUserMessage msg)
         {
-            long referralAmount = 1;
+            long referralAmount = int.Parse(_db.Config.First(x => x.Name == "ReferralPoints").Value);
 
             IUser user = msg.MentionedUsers.First();
 
@@ -271,15 +343,11 @@ namespace STDTBot.Services
 
             User dbUser = _db.Users.Find((long)user.Id);
             await AddPointsToUser(dbUser, referralAmount).ConfigureAwait(false);
+            await LogPointsForAction(dbUser, PointReasons.Referral, (int)referralAmount);
 
             // Get Rookie Role
             User u = _db.Users.Find((long)msg.Author.Id);
 
-            // hardcoded, change to config somewhere
-            //STDT Test
-            IGuild guild = _client.GetGuild(761587244699484160);
-            //STDT live
-            //IGuild guild = _client.GetGuild(751253055378423838);
             IGuildUser guildUser = await guild.GetUserAsync(msg.Author.Id).ConfigureAwait(false);
 
             u.CurrentRank = _db.Ranks.First(x => x.PointsNeeded == 0).ID;
@@ -308,6 +376,7 @@ namespace STDTBot.Services
         private async Task AddPointsToUser(User u, long amount)
         {
             u.CurrentPoints += amount;
+            u.HistoricPoints += amount;
             _db.Entry(u).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
             await OnUserPointsChanged(u).ConfigureAwait(false);
             await _db.SaveChangesAsync().ConfigureAwait(false);
@@ -315,12 +384,6 @@ namespace STDTBot.Services
 
         private async Task OnUserPointsChanged(User u)
         {
-            // hardcoded, change to config somewhere
-            //STDT Test
-            IGuild guild = _client.GetGuild(761587244699484160);
-            //STDT live
-            //IGuild guild = _client.GetGuild(751253055378423838);
-
             List<RankInfo> ranks = _db.Ranks.ToList().OrderBy(x => x.PointsNeeded).ToList();
             RankInfo currentRank = (_db.Ranks.FirstOrDefault(x => x.ID == u.CurrentRank));
             int rankIndex = ranks.IndexOf(currentRank);
@@ -373,12 +436,6 @@ namespace STDTBot.Services
 
         private async Task<IGuildChannel> GetSpecialChannel(string channelType)
         {
-            // hardcoded, change to config somewhere
-            //STDT Test
-            IGuild guild = _client.GetGuild(761587244699484160);
-            //STDT live
-            //IGuild guild = _client.GetGuild(751253055378423838);
-
             SpecialChannel channel = _db.SpecialChannels.First(x => x.ChannelType == channelType);
 
             return await guild.GetChannelAsync(channel.GetChannelID()).ConfigureAwait(false);
@@ -386,15 +443,33 @@ namespace STDTBot.Services
 
         private async Task<IVoiceChannel> GetVoiceChannel(string channelType)
         {
-            // hardcoded, change to config somewhere
-            //STDT Test
-            IGuild guild = _client.GetGuild(761587244699484160);
-            //STDT live
-            //IGuild guild = _client.GetGuild(751253055378423838);
-
             SpecialChannel channel = _db.SpecialChannels.First(x => x.ChannelType == channelType);
 
             return await guild.GetVoiceChannelAsync(channel.GetChannelID()).ConfigureAwait(false);
+        }
+
+
+        internal enum PointReasons
+        {
+            GeneralMessage,
+            StreamTips,
+            Raid,
+            Referral
+        }
+
+        private async Task LogPointsForAction(User dbUser, PointReasons reason, int points)
+        {
+            _db.MIData.Add(new
+                MIData()
+            {
+                UserId = dbUser.ID,
+                PointsLogged = points,
+                ReasonLogged = (int)reason,
+                DateLogged = DateTime.UtcNow
+            }
+            );
+
+            await _db.SaveChangesAsync().ConfigureAwait(false);
         }
     }
 }

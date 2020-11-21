@@ -31,12 +31,15 @@ namespace STDTBot
             .AddSingleton<CommandHandler>()
             .AddSingleton<LoggingService>()
             .AddSingleton(_config)
-            .AddDbContext<STDTContext>(options => options.UseMySQL(BuildConnectionString()));
+            .AddDbContext<STDTContext>(options => options.UseMySQL(BuildConnectionString()))
+            .AddSingleton<CooldownService>();
 
             var provider = services.BuildServiceProvider();
+            provider.GetRequiredService<STDTContext>().Database.Migrate();
             provider.GetRequiredService<LoggingService>();
             await provider.GetRequiredService<StartupService>().StartAsync();
             provider.GetRequiredService<CommandHandler>();
+            provider.GetRequiredService<CooldownService>();
 
             await Task.Delay(-1);
         }
