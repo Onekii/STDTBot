@@ -162,11 +162,17 @@ namespace STDTBot.Services
             User u = _db.Users.Find((long)user.Id);
             RankInfo ri = _db.Ranks.Find(u.CurrentRank);
 
+            if (ri is null)
+            {
+                _log.Error($"RankInfo is null!, Current rank is {u.CurrentRank}, User is {u.Username}");
+                return; 
+            }
+
             long roleToRemove = (online ? ri.OfflineRole : ri.OnlineRole);
             long roleToAdd = (online ? ri.OnlineRole : ri.OfflineRole);
 
             await user.RemoveRoleAsync(user.Guild.GetRole((ulong)roleToRemove)).ConfigureAwait(false);
-            await user.RemoveRoleAsync(user.Guild.GetRole((ulong)roleToAdd)).ConfigureAwait(false);
+            await user.AddRoleAsync(user.Guild.GetRole((ulong)roleToAdd)).ConfigureAwait(false);
         }
 
         private async Task<IVoiceChannel> GetRaidVoiceChannel()
