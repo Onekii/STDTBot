@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Discord;
+using STDTBot.Models;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using static STDTBot.Services.CommandHandler;
@@ -11,5 +13,6 @@ namespace STDTBot
 
         internal static STDTBot.Models.RaidInfo _activeRaid;
         internal static List<Cooldown> Cooldowns = new List<Cooldown>();
+        internal static List<IGuildUser> AlreadyRaided = new List<IGuildUser>();
     }
 }

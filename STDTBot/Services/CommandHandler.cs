@@ -28,7 +28,6 @@ namespace STDTBot.Services
         private IGuild guild;
         private readonly STDTContext _db;
         private ulong _referralChannelId;
-        uint pointsPerThird = 0;
 
         private Dictionary<IUser, DateTime> _voiceMembersJoinedTimer { get; set; }
 
@@ -78,6 +77,16 @@ namespace STDTBot.Services
             if (prev.Activity is null && now.Activity != null)
             {
                 if (now.Activity.Type == ActivityType.Streaming)
+                {
+                    u = _db.Users.Find((long)now.Id);
+                    u.IsStreaming = true;
+
+                    await AssignStreamingRole(now, true);
+                }
+            }
+            else if (prev.Activity != null && now.Activity != null)
+            {
+                if (prev.Activity.Type != ActivityType.Streaming && now.Activity.Type == ActivityType.Streaming)
                 {
                     u = _db.Users.Find((long)now.Id);
                     u.IsStreaming = true;
@@ -238,12 +247,14 @@ namespace STDTBot.Services
 
         private async Task UserLeftRaid(IUser user)
         {
+            int pointsPerTen = int.Parse(_db.Config.First(x => x.Name == "RaidPoints").Value);
+
             DateTime leftTime = DateTime.UtcNow;
             DateTime joinedTime = _voiceMembersJoinedTimer[user];
             _voiceMembersJoinedTimer.Remove(user);
 
             double minutesInRaid = leftTime.Subtract(joinedTime).TotalMinutes;
-            double pointAmount = Math.Round(minutesInRaid / 3) * pointsPerThird;
+            double pointAmount = Math.Round(minutesInRaid / 6) * pointsPerTen;
 
             RaidAttendee dbUser = await _db.RaidAttendees.FindAsync((long)user.Id, Globals._activeRaid.RaidID);
             dbUser.MinutesInRaid += (int)minutesInRaid;
@@ -366,15 +377,6 @@ namespace STDTBot.Services
             User dbUser = _db.Users.Find((long)user.Id);
             await AddPointsToUser(dbUser, referralAmount).ConfigureAwait(false);
             await LogPointsForAction(dbUser, PointReasons.Referral, (int)referralAmount);
-
-            //// Get Rookie Role
-            //User u = _db.Users.Find((long)msg.Author.Id);
-
-            //IGuildUser guildUser = await guild.GetUserAsync(msg.Author.Id).ConfigureAwait(false);
-
-            //u.CurrentRank = _db.Ranks.First(x => x.PointsNeeded == 0).ID;
-
-            //await AssignRankRole(guildUser, u).ConfigureAwait(false);
         }
 
         private async Task DecayServerPoints()

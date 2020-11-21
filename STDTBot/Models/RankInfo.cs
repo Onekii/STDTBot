@@ -12,5 +12,6 @@ namespace STDTBot.Models
         public long OfflineRole { get; set; }
         public long OnlineRole { get; set; }
         public long PointsNeeded { get; set; }
+        public int RaidWeighting { get; set; }
     }
 }

@@ -2,15 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using STDTBot.Database;
 
 namespace STDTBot.Migrations
 {
     [DbContext(typeof(STDTContext))]
-    partial class STDTContextModelSnapshot : ModelSnapshot
+    [Migration("20201121173137_raidWeighting")]
+    partial class raidWeighting
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

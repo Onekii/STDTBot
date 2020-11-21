@@ -144,6 +144,36 @@ namespace STDTBot.Modules
         {
             await _commands.RaidFinished().ConfigureAwait(false);
             Globals._activeRaid = null;
+            Globals.AlreadyRaided.Clear();
+        }
+
+        [PermissionCheck]
+        [Command("nextraid")]
+        public async Task GetNextRaider()
+        {
+            List<User> users = _db.Users.ToList().Where(x => x.IsStreaming).ToList();
+            List<IGuildUser> guildUsers = new List<IGuildUser>();
+
+            IGuild guild = Context.Guild;
+
+            foreach (var u in users)
+            {
+                IGuildUser guildUser = await guild.GetUserAsync(u.GetID());
+                if (Globals.AlreadyRaided.Contains(guildUser)) continue;
+                RankInfo ri = _db.Ranks.Find(u.CurrentRank);
+
+                for (int i = 0; i < ri.RaidWeighting; i++)
+                    guildUsers.Add(guildUser);
+            }
+
+            Random r = new Random();
+            int idx = r.Next(0, guildUsers.Count);
+
+            IGuildUser nextRaid = guildUsers[idx];
+
+            await Context.Channel.SendMessageAsync($"Next raid has been decided! We'll be heading to user: {nextRaid.Mention}'s channel!").ConfigureAwait(false);
+            _log.Info($"Had {guildUsers.Count} entries. Selected index {idx}");
+            Globals.AlreadyRaided.Add(nextRaid);
         }
     }
 }
