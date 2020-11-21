@@ -80,7 +80,7 @@ namespace STDTBot.Services
             {
                 if (now.Activity.Type == ActivityType.Streaming)
                 {
-                    u = _db.Users.Find(now.Id);
+                    u = _db.Users.Find((long)now.Id);
                     u.IsStreaming = true;
 
                     await AssignStreamingRole(now, true);
@@ -90,7 +90,7 @@ namespace STDTBot.Services
             {
                 if (now.Activity is null || (now.Activity != null && now.Activity.Type != ActivityType.Streaming))
                 {
-                    u = _db.Users.Find(now.Id);
+                    u = _db.Users.Find((long)now.Id);
                     u.IsStreaming = false;
 
                     await AssignStreamingRole(now, false);
@@ -106,7 +106,7 @@ namespace STDTBot.Services
 
         private async Task OnUserJoined(SocketGuildUser user)
         {
-            User existingUser = _db.Users.Find(user.Id);
+            User existingUser = _db.Users.Find((long)user.Id);
             if (existingUser is null)
             {
                 existingUser = new User()
@@ -160,7 +160,7 @@ namespace STDTBot.Services
 
         private async Task AssignStreamingRole(IGuildUser user, bool online)
         {
-            User u = _db.Users.Find(user.Id);
+            User u = _db.Users.Find((long)user.Id);
             RankInfo ri = _db.Ranks.Find(u.CurrentRank);
 
             long roleToRemove = (online ? ri.OfflineRole : ri.OnlineRole);
