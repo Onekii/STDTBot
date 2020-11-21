@@ -254,7 +254,9 @@ namespace STDTBot.Services
             _voiceMembersJoinedTimer.Remove(user);
 
             double minutesInRaid = leftTime.Subtract(joinedTime).TotalMinutes;
-            double pointAmount = Math.Round(minutesInRaid / 6) * pointsPerTen;
+            minutesInRaid -= (minutesInRaid % 10);
+
+            double pointAmount = Math.Round(minutesInRaid / 10) * pointsPerTen;
 
             RaidAttendee dbUser = await _db.RaidAttendees.FindAsync((long)user.Id, Globals._activeRaid.RaidID);
             dbUser.MinutesInRaid += (int)minutesInRaid;
