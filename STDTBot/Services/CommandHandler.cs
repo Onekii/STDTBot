@@ -187,9 +187,11 @@ namespace STDTBot.Services
                 return;
 
             IVoiceChannel raidVoiceChannel = await GetRaidVoiceChannel();
+            IVoiceChannel muteVoiceChannel = await GetRaidMuteVoiceChannel();
 
             // See if you can find a better way to do this.
-            if (oldState.VoiceChannel != raidVoiceChannel && newState.VoiceChannel == raidVoiceChannel)
+            if (oldState.VoiceChannel != raidVoiceChannel && newState.VoiceChannel == raidVoiceChannel
+                || oldState.VoiceChannel != muteVoiceChannel && newState.VoiceChannel == muteVoiceChannel)
             //Joined Raid Channel
             {
                 _voiceMembersJoinedTimer.Add(user, DateTime.UtcNow);
@@ -208,15 +210,26 @@ namespace STDTBot.Services
 
                 _db.RaidAttendees.Add(dbUser);
             }
-            else if (oldState.VoiceChannel == raidVoiceChannel && newState.VoiceChannel != raidVoiceChannel)
+            else if (oldState.VoiceChannel == raidVoiceChannel && newState.VoiceChannel == muteVoiceChannel
+                || oldState.VoiceChannel == muteVoiceChannel && newState.VoiceChannel == raidVoiceChannel) { // Nothing they're just going to be muted 
+            }
+            else if (oldState.VoiceChannel == raidVoiceChannel && newState.VoiceChannel != raidVoiceChannel
+                || oldState.VoiceChannel == muteVoiceChannel && newState.VoiceChannel != muteVoiceChannel)
             //Left Raid Channel
             {
                 await UserLeftRaid(user).ConfigureAwait(false);
             }
+
+
             // No Action Required, Not using raid channel
             else { }
 
             await _db.SaveChangesAsync().ConfigureAwait(false);
+        }
+
+        private async Task<IVoiceChannel> GetRaidMuteVoiceChannel()
+        {
+            return await GetVoiceChannel("RaidVoiceMute");
         }
 
         private async Task UserLeftRaid(IUser user)
