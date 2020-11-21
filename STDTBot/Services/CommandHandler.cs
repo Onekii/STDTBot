@@ -363,14 +363,14 @@ namespace STDTBot.Services
             await AddPointsToUser(dbUser, referralAmount).ConfigureAwait(false);
             await LogPointsForAction(dbUser, PointReasons.Referral, (int)referralAmount);
 
-            // Get Rookie Role
-            User u = _db.Users.Find((long)msg.Author.Id);
+            //// Get Rookie Role
+            //User u = _db.Users.Find((long)msg.Author.Id);
 
-            IGuildUser guildUser = await guild.GetUserAsync(msg.Author.Id).ConfigureAwait(false);
+            //IGuildUser guildUser = await guild.GetUserAsync(msg.Author.Id).ConfigureAwait(false);
 
-            u.CurrentRank = _db.Ranks.First(x => x.PointsNeeded == 0).ID;
+            //u.CurrentRank = _db.Ranks.First(x => x.PointsNeeded == 0).ID;
 
-            await AssignRankRole(guildUser, u).ConfigureAwait(false);
+            //await AssignRankRole(guildUser, u).ConfigureAwait(false);
         }
 
         private async Task DecayServerPoints()
