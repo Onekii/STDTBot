@@ -37,7 +37,6 @@ namespace STDTBot.Services
             StreamTips,
             GeneralMessage
         }
-
         internal struct Cooldown
         {
             internal CooldownType Type { get; set; }
@@ -158,7 +157,7 @@ namespace STDTBot.Services
                 await guildUser.RemoveRoleAsync(guildUser.Guild.GetRole((ulong)rank.OfflineRole)).ConfigureAwait(false);
         }
 
-        private async Task AssignStreamingRole(IGuildUser user, bool online)
+        internal async Task AssignStreamingRole(IGuildUser user, bool online)
         {
             User u = _db.Users.Find((long)user.Id);
             RankInfo ri = _db.Ranks.Find(u.CurrentRank);

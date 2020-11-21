@@ -26,6 +26,22 @@ namespace STDTBot.Modules
             _commands = commandHandler;
         }
 
+        [PermissionCheck]
+        [Command("checkstreaming")]
+        public async Task CheckForUserStreaming()
+        {
+            foreach (IGuildUser u in Context.Guild.Users)
+            {
+                if (u.Activity.Type == ActivityType.Streaming)
+                {
+                    User dbUser = _db.Users.Find((long)u.Id);
+                    dbUser.IsStreaming = true;
+
+                    await _commands.AssignStreamingRole(u, true);
+                }
+            }
+        }
+
         //[PermissionCheck]
         //[Command("CheckCurrentRoles")]
         //public async Task CheckRoles()
