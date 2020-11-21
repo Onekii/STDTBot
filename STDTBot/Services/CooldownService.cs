@@ -39,7 +39,7 @@ namespace STDTBot.Services
         {
             int amount = Globals.Cooldowns.RemoveAll(x => x.Expires < DateTime.UtcNow);
 
-            _log.Info($"Removed {amount} cooldowns for General Messages + Stream Tips");
+            _log.Debug($"Removed {amount} cooldowns for General Messages + Stream Tips");
         }
     }
 }

@@ -27,6 +27,30 @@ namespace STDTBot.Modules
         }
 
         [PermissionCheck]
+        [Command("CheckCurrentRoles")]
+        public async Task CheckRoles()
+        {
+            List<long> CurrentRoleIDs = _db.Ranks.ToList().Select(x => x.OfflineRole).ToList();
+            foreach (IGuildUser U in Context.Guild.Users)
+            {
+                foreach (var role in U.RoleIds)
+                {
+                    IRole a = Context.Guild.GetRole(role);
+                    _log.Info($"User {U.Username} has roles: {a.Name}");
+
+                    if (CurrentRoleIDs.Contains((long)role))
+                    {
+                        RankInfo r = _db.Ranks.First(x => x.OfflineRole == (long)role);
+                        //u.CurrentRank = r.ID;
+                        //u.CurrentPoints = r.PointsNeeded;
+                        //u.HistoricPoints = r.PointsNeeded;
+                        _log.Info($"Found User {U.Username} has rank: {r.Name} and Role ID: {role}");
+                    }
+                }
+            }
+        }
+
+        [PermissionCheck]
         [Command("insertusers")]
         public async Task InsertAllUsers()
         {
