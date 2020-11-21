@@ -7,6 +7,7 @@ using STDTBot.Services;
 using STDTBot.Utils.Preconditions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,6 +31,7 @@ namespace STDTBot.Modules
         public async Task InsertAllUsers()
         {
             List<User> usersToInsert = new List<User>();
+            List<long> CurrentRoleIDs = _db.Ranks.ToList().Select(x => x.OfflineRole).ToList();
 
             foreach (IGuildUser guildUser in Context.Guild.Users)
             {
@@ -54,6 +56,17 @@ namespace STDTBot.Modules
                     u.Joined = guildUser.JoinedAt.Value.LocalDateTime;
                 else
                     u.Joined = DateTime.Today;
+
+                foreach (var role in guildUser.RoleIds)
+                {
+                    if (CurrentRoleIDs.Contains((long)role))
+                    {
+                        RankInfo r = _db.Ranks.First(x => x.OfflineRole == (long)role);
+                        u.CurrentRank = r.ID;
+                        u.CurrentPoints = r.PointsNeeded;
+                        u.HistoricPoints = r.PointsNeeded;
+                    }
+                }
 
                 usersToInsert.Add(u);
             }
