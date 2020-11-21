@@ -86,9 +86,11 @@ namespace STDTBot.Modules
                     if (CurrentRoleIDs.Contains((long)role))
                     {
                         RankInfo r = _db.Ranks.First(x => x.OfflineRole == (long)role);
+                        if (r.Name == "Rookie") continue;
                         u.CurrentRank = r.ID;
                         u.CurrentPoints = r.PointsNeeded;
                         u.HistoricPoints = r.PointsNeeded;
+                        _log.Info($"Assigned Role {r.Name} to {u.Username}");
                     }
                 }
 
