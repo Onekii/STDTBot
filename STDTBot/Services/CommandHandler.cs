@@ -136,7 +136,9 @@ namespace STDTBot.Services
             if (user is null)
                 user = _db.Users.Find((long)guildUser.Id);
 
-            RankInfo rank = _db.Ranks.First(x => x.ID == user.CurrentRank);
+            RankInfo rank = _db.Ranks.FirstOrDefault(x => x.ID == user.CurrentRank);
+            if (rank is null)
+                return;
 
             if (user.IsStreaming)
                 await guildUser.AddRoleAsync(guildUser.Guild.GetRole((ulong)rank.OnlineRole)).ConfigureAwait(false);
@@ -149,7 +151,9 @@ namespace STDTBot.Services
             if (user is null)
                 user = _db.Users.Find((long)guildUser.Id);
 
-            RankInfo rank = _db.Ranks.First(x => x.ID == user.CurrentRank);
+            RankInfo rank = _db.Ranks.FirstOrDefault(x => x.ID == user.CurrentRank);
+            if (rank is null)
+                return;
 
             if (user.IsStreaming)
                 await guildUser.RemoveRoleAsync(guildUser.Guild.GetRole((ulong)rank.OnlineRole)).ConfigureAwait(false);
