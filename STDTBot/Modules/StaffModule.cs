@@ -138,6 +138,8 @@ namespace STDTBot.Modules
 
             Globals._activeRaid = newRaid;
 
+            _commands.CheckUsersInRaidChannel();
+
             await Context.Channel.SendMessageAsync("", false, Embeds.RaidStarted(Globals._activeRaid, Context.User as IGuildUser)).ConfigureAwait(false);
         }
         

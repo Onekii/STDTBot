@@ -193,6 +193,55 @@ namespace STDTBot.Services
             return await GetVoiceChannel("RaidVoice");
         }
 
+        internal async Task CheckUsersInRaidChannel()
+        {
+            IVoiceChannel raidVoiceChannel = await GetRaidVoiceChannel();
+            IVoiceChannel muteVoiceChannel = await GetRaidMuteVoiceChannel();
+
+            var usersInRaidVoice = await raidVoiceChannel.GetUsersAsync().FirstAsync();
+            var usersInMuteRaid = await muteVoiceChannel.GetUsersAsync().FirstAsync();
+
+            foreach (var user in usersInRaidVoice)
+            {
+                _voiceMembersJoinedTimer.Add(user, DateTime.UtcNow);
+
+                RaidAttendee dbUser = _db.RaidAttendees.Find((long)user.Id, Globals._activeRaid.RaidID);
+                if (dbUser is null)
+                {
+                    dbUser = new RaidAttendee()
+                    {
+                        RaidID = Globals._activeRaid.RaidID,
+                        UserID = (long)user.Id,
+                        MinutesInRaid = 0,
+                        PointsObtained = 0
+                    };
+                }
+
+                _db.RaidAttendees.Add(dbUser);
+            }
+
+            foreach (var user in usersInMuteRaid)
+            {
+                _voiceMembersJoinedTimer.Add(user, DateTime.UtcNow);
+
+                RaidAttendee dbUser = _db.RaidAttendees.Find((long)user.Id, Globals._activeRaid.RaidID);
+                if (dbUser is null)
+                {
+                    dbUser = new RaidAttendee()
+                    {
+                        RaidID = Globals._activeRaid.RaidID,
+                        UserID = (long)user.Id,
+                        MinutesInRaid = 0,
+                        PointsObtained = 0
+                    };
+                }
+
+                _db.RaidAttendees.Add(dbUser);
+            }
+
+            await _db.SaveChangesAsync().ConfigureAwait(false);
+        }
+
         private async Task OnUserVoiceStateUpdated(SocketUser user, SocketVoiceState oldState, SocketVoiceState newState)
         {
 
