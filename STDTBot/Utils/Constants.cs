@@ -14,5 +14,8 @@ namespace STDTBot
         internal static STDTBot.Models.RaidInfo _activeRaid;
         internal static List<Cooldown> Cooldowns = new List<Cooldown>();
         internal static List<IGuildUser> AlreadyRaided = new List<IGuildUser>();
+
+        public static Color SuccessColor = new Color(127, 255, 0);
+
     }
 }

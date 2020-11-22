@@ -4,6 +4,7 @@ using NLog;
 using STDTBot.Database;
 using STDTBot.Models;
 using STDTBot.Services;
+using STDTBot.Utils;
 using STDTBot.Utils.Preconditions;
 using System;
 using System.Collections.Generic;
@@ -136,6 +137,8 @@ namespace STDTBot.Modules
             await _db.SaveChangesAsync();
 
             Globals._activeRaid = newRaid;
+
+            await Context.Channel.SendMessageAsync("", false, Embeds.RaidStarted(Globals._activeRaid, Context.User as IGuildUser)).ConfigureAwait(false);
         }
         
         [PermissionCheck]
@@ -143,8 +146,13 @@ namespace STDTBot.Modules
         public async Task StopRaid()
         {
             await _commands.RaidFinished().ConfigureAwait(false);
+            RaidInfo ri = Globals._activeRaid;
+
             Globals._activeRaid = null;
             Globals.AlreadyRaided.Clear();
+            IGuild g = Context.Guild;
+
+            await Context.Channel.SendMessageAsync("", false, Embeds.RaidEnded(_db, ri, g)).ConfigureAwait(false);
         }
 
         [PermissionCheck]
