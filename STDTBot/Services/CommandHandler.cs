@@ -252,6 +252,14 @@ namespace STDTBot.Services
             IVoiceChannel muteVoiceChannel = await GetRaidMuteVoiceChannel();
 
             // See if you can find a better way to do this.
+            if (oldState.VoiceChannel == raidVoiceChannel && newState.VoiceChannel == muteVoiceChannel
+    || oldState.VoiceChannel == muteVoiceChannel && newState.VoiceChannel == raidVoiceChannel)
+            { // Nothing they're just going to be muted 
+                _log.Info($"User {user.Username} moved from {oldState.VoiceChannel.Name} to {newState.VoiceChannel.Name}. No action required.");
+                return;
+            }
+
+
             if (oldState.VoiceChannel != raidVoiceChannel && newState.VoiceChannel == raidVoiceChannel
                 || oldState.VoiceChannel != muteVoiceChannel && newState.VoiceChannel == muteVoiceChannel)
             //Joined Raid Channel
@@ -271,14 +279,14 @@ namespace STDTBot.Services
                 }
 
                 _db.RaidAttendees.Add(dbUser);
+                _log.Info($"User {user.Username} joined a raid chat. Adding to table.");
             }
-            else if (oldState.VoiceChannel == raidVoiceChannel && newState.VoiceChannel == muteVoiceChannel
-                || oldState.VoiceChannel == muteVoiceChannel && newState.VoiceChannel == raidVoiceChannel) { // Nothing they're just going to be muted 
-            }
+
             else if (oldState.VoiceChannel == raidVoiceChannel && newState.VoiceChannel != raidVoiceChannel
                 || oldState.VoiceChannel == muteVoiceChannel && newState.VoiceChannel != muteVoiceChannel)
             //Left Raid Channel
             {
+                _log.Info($"User {user.Username} left a raid chat. Calculating points.");
                 await UserLeftRaid(user).ConfigureAwait(false);
             }
 
@@ -296,11 +304,11 @@ namespace STDTBot.Services
 
         private async Task UserLeftRaid(IUser user)
         {
-            int pointsPerTen = int.Parse(_db.Config.First(x => x.Name == "RaidPoints").Value);
-
             DateTime leftTime = DateTime.UtcNow;
             DateTime joinedTime = _voiceMembersJoinedTimer[user];
             _voiceMembersJoinedTimer.Remove(user);
+
+            int pointsPerTen = int.Parse(_db.Config.First(x => x.Name == "RaidPoints").Value);
 
             double minutesInRaid = leftTime.Subtract(joinedTime).TotalMinutes;
             minutesInRaid -= (minutesInRaid % 10);
