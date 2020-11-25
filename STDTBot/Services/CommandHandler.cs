@@ -276,9 +276,9 @@ namespace STDTBot.Services
                         MinutesInRaid = 0,
                         PointsObtained = 0
                     };
+                    _db.RaidAttendees.Add(dbUser);
                 }
 
-                _db.RaidAttendees.Add(dbUser);
                 _log.Info($"User {user.Username} joined a raid chat. Adding to table.");
             }
 
