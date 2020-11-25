@@ -327,7 +327,6 @@ namespace STDTBot.Services
         private async Task OnMessageReceieved(SocketMessage message)
         {
             var msg = message as SocketUserMessage;
-            var context = new SocketCommandContext(_client, msg);
 
             if (msg == null)
                 return;
@@ -335,6 +334,7 @@ namespace STDTBot.Services
             if (msg.Author == _client.CurrentUser)
                 return;
 
+            var context = new SocketCommandContext(_client, msg);
 
             if (await HandleSpecialChannels(msg, context).ConfigureAwait(false))
                 return;
