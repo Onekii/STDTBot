@@ -347,7 +347,7 @@ namespace STDTBot.Services
 
                 if (!result.IsSuccess)
                 {
-                    _log.Error(result.ToString());
+                    _log.Info(result.ToString());
                     await msg.DeleteAsync().ConfigureAwait(false);
                 }
             }

@@ -33,11 +33,11 @@ namespace STDTBot.Modules
         {
             foreach (IGuildUser u in Context.Guild.Users)
             {
-		if (u.Status == UserStatus.Offline) continue;
-		if (u.Activity is null)
-		{
-			_log.Warn($"User: {u.Username} activity is null");
-		}
+                if (u.Status == UserStatus.Offline) continue;
+                if (u.Activity is null)
+                {
+                    _log.Warn($"User: {u.Username} activity is null");
+                }
                 if (u.Activity != null && u.Activity.Type == ActivityType.Streaming)
                 {
                     User dbUser = _db.Users.Find((long)u.Id);
@@ -45,10 +45,10 @@ namespace STDTBot.Modules
 
                     await _commands.AssignStreamingRole(u, true);
                 }
-		if (u.Activity != null && u.Activity.Type != ActivityType.Streaming)
-		{
-			_log.Warn($"User: {u.Username} activity: {u.Activity.Type.ToString()} - {u.Activity.Name}");
-		}
+                if (u.Activity != null && u.Activity.Type != ActivityType.Streaming)
+                {
+                    _log.Warn($"User: {u.Username} activity: {u.Activity.Type.ToString()} - {u.Activity.Name}");
+                }
             }
         }
 
@@ -142,7 +142,7 @@ namespace STDTBot.Modules
 
             await Context.Channel.SendMessageAsync("", false, Embeds.RaidStarted(Globals._activeRaid, Context.User as IGuildUser)).ConfigureAwait(false);
         }
-        
+
         [PermissionCheck]
         [Command("stopraid")]
         public async Task StopRaid()
