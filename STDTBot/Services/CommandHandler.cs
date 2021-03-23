@@ -3,7 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.Extensions.Configuration;
-using MySql.Data.EntityFrameworkCore.Query.Internal;
+using MySql.EntityFrameworkCore.Query.Internal;
 using NLog;
 using Org.BouncyCastle.Asn1.Crmf;
 using Org.BouncyCastle.Crypto.Engines;

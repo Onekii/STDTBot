@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
-using MySql.Data.EntityFrameworkCore.Metadata;
-using MySql.Data.EntityFrameworkCore.Storage.Internal;
+using MySql.EntityFrameworkCore.Metadata;
+using MySql.EntityFrameworkCore.Storage.Internal;
 
 namespace STDTBot.Migrations
 {
