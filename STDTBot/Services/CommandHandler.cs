@@ -127,7 +127,7 @@ namespace STDTBot.Services
                     Discriminator = user.Discriminator,
                     CurrentPoints = 0,
                     HistoricPoints = 0,
-                    CurrentRank = 0,
+                    CurrentRank = 1,
                     IsStreaming = false,
                     Left = new DateTime(1900, 1, 1)
                 };

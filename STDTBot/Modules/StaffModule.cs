@@ -76,54 +76,54 @@ namespace STDTBot.Modules
         //    }
         //}
 
-        //[PermissionCheck]
-        //[Command("insertusers")]
-        //public async Task InsertAllUsers()
-        //{
-        //    List<User> usersToInsert = new List<User>();
-        //    List<long> CurrentRoleIDs = _db.Ranks.ToList().Select(x => x.OfflineRole).ToList();
+        [PermissionCheck]
+        [Command("insertusers")]
+        public async Task InsertAllUsers()
+        {
+            List<User> usersToInsert = new List<User>();
+            List<long> CurrentRoleIDs = _db.Ranks.ToList().Select(x => x.OfflineRole).ToList();
 
-        //    foreach (IGuildUser guildUser in Context.Guild.Users)
-        //    {
-        //        if (_db.Users.Find((long)guildUser.Id) != null)
-        //            continue;
+            foreach (IGuildUser guildUser in Context.Guild.Users)
+            {
+                if (_db.Users.Find((long)guildUser.Id) != null)
+                    continue;
 
-        //        User u = new User
-        //        {
-        //            ID = (long)guildUser.Id,
-        //            Username = guildUser.Username,
-        //            Discriminator = guildUser.Discriminator,
-        //            Left = new DateTime(1900, 01, 01),
-        //            UserAvatar = guildUser.GetAvatarUrl(),
-        //            IsStreaming = false,
-        //            HistoricPoints = 0,
-        //            CurrentRank = 0,
-        //            CurrentPoints = 0,
-        //            CurrentNickname = guildUser.Nickname
-        //        };
+                User u = new User
+                {
+                    ID = (long)guildUser.Id,
+                    Username = guildUser.Username,
+                    Discriminator = guildUser.Discriminator,
+                    Left = new DateTime(1900, 01, 01),
+                    UserAvatar = guildUser.GetAvatarUrl(),
+                    IsStreaming = false,
+                    HistoricPoints = 0,
+                    CurrentRank = 0,
+                    CurrentPoints = 0,
+                    CurrentNickname = guildUser.Nickname
+                };
 
-        //        if (guildUser.JoinedAt.HasValue)
-        //            u.Joined = guildUser.JoinedAt.Value.LocalDateTime;
-        //        else
-        //            u.Joined = DateTime.Today;
+                if (guildUser.JoinedAt.HasValue)
+                    u.Joined = guildUser.JoinedAt.Value.LocalDateTime;
+                else
+                    u.Joined = DateTime.Today;
 
-        //        foreach (var role in guildUser.RoleIds)
-        //        {
-        //            if (CurrentRoleIDs.Contains((long)role))
-        //            {
-        //                RankInfo r = _db.Ranks.First(x => x.OfflineRole == (long)role);
-        //                u.CurrentRank = r.ID;
-        //                u.CurrentPoints = r.PointsNeeded;
-        //                u.HistoricPoints = r.PointsNeeded;
-        //                _log.Info($"Assigned Role {r.Name} to {u.Username}");
-        //            }
-        //        }
+                foreach (var role in guildUser.RoleIds)
+                {
+                    if (CurrentRoleIDs.Contains((long)role))
+                    {
+                        RankInfo r = _db.Ranks.First(x => x.OfflineRole == (long)role);
+                        u.CurrentRank = r.ID;
+                        u.CurrentPoints = r.PointsNeeded;
+                        u.HistoricPoints = r.PointsNeeded;
+                        _log.Info($"Assigned Role {r.Name} to {u.Username}");
+                    }
+                }
 
-        //        usersToInsert.Add(u);
-        //    }
-        //    _db.Users.AddRange(usersToInsert);
-        //    await _db.SaveChangesAsync().ConfigureAwait(false);
-        //}
+                usersToInsert.Add(u);
+            }
+            _db.Users.AddRange(usersToInsert);
+            await _db.SaveChangesAsync().ConfigureAwait(false);
+        }
 
 
         [PermissionCheck]
